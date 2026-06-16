@@ -23,7 +23,7 @@ function colorGamut(): string {
   if (mq('(color-gamut: rec2020)')) return 'Rec. 2020'
   if (mq('(color-gamut: p3)')) return 'DCI-P3'
   if (mq('(color-gamut: srgb)')) return 'sRGB'
-  return 'невідомо'
+  return 'unknown'
 }
 
 function dynamicRange(): string {
@@ -32,8 +32,8 @@ function dynamicRange(): string {
 
 function getOrientation(): string {
   const o = screen.orientation && screen.orientation.type
-  if (!o) return mq('(orientation: portrait)') ? 'портретна' : 'альбомна'
-  return o.includes('portrait') ? 'портретна' : 'альбомна'
+  if (!o) return mq('(orientation: portrait)') ? 'portrait' : 'landscape'
+  return o.includes('portrait') ? 'portrait' : 'landscape'
 }
 
 function gcd(a: number, b: number): number {
@@ -69,83 +69,89 @@ function buildCards(): CardDescriptor[] {
   const h = screen.height
   const physW = Math.round(w * dpr)
   const physH = Math.round(h * dpr)
+  const cores = navigator.hardwareConcurrency || '?'
+  const colors = Math.pow(2, screen.colorDepth).toLocaleString()
 
   return [
     {
       icon: '🖥️',
-      label: 'Роздільна здатність',
+      label: 'Resolution',
       featured: true,
       value: `${w} × ${h}`,
-      hint: `Фізична (з урахуванням DPR): ${physW} × ${physH} px`,
+      hint: `Physical (with DPR): ${physW} × ${physH} px`,
     },
     {
       icon: '🔍',
-      label: 'Масштаб системи (DPR)',
-      value: `${dpr}×`,
+      label: 'System scale (DPR)',
+      // devicePixelRatio is floating point (e.g. 1.100000023841858 at 110%
+      // zoom); round to 2 decimals for display only.
+      value: `${Math.round(dpr * 100) / 100}×`,
       hint:
         dpr > 1
-          ? 'Дисплей із підвищеною щільністю пікселів (Retina/HiDPI)'
-          : 'Стандартна щільність пікселів',
+          ? 'High-density display (Retina/HiDPI)'
+          : 'Standard pixel density',
     },
     {
       icon: '📐',
-      label: 'Область перегляду',
+      label: 'Viewport',
       value: `${window.innerWidth} × ${window.innerHeight}`,
-      hint: 'Видима частина вікна (viewport)',
+      hint: 'Visible part of the window (viewport)',
     },
     {
       icon: '🗔',
-      label: 'Доступна область',
+      label: 'Available area',
       value: `${screen.availWidth} × ${screen.availHeight}`,
-      hint: 'Екран без панелі завдань / док-панелі',
+      hint: 'Screen without taskbar / dock',
     },
     {
       icon: '🎞️',
-      label: 'Частота оновлення',
+      label: 'Refresh rate',
       value: '…',
       id: 'refresh',
-      hint: 'Вимірюється у реальному часі',
+      hint: 'Measured in real time',
     },
     {
       icon: '🎨',
-      label: 'Глибина кольору',
-      value: `${screen.colorDepth}-біт`,
-      hint: `${Math.pow(2, screen.colorDepth).toLocaleString('uk')} кольорів`,
+      label: 'Color depth',
+      value: `${screen.colorDepth}-bit`,
+      hint: `${colors} colors`,
     },
     {
       icon: '🌈',
-      label: 'Колірний охват',
+      label: 'Color gamut',
       value: colorGamut(),
-      hint: `Динамічний діапазон: ${dynamicRange()}`,
+      hint: `Dynamic range: ${dynamicRange()}`,
     },
     {
       icon: '🔄',
-      label: 'Орієнтація',
+      label: 'Orientation',
       value: getOrientation(),
-      hint: `Співвідношення сторін: ${aspectRatio(w, h)}`,
+      hint: `Aspect ratio: ${aspectRatio(w, h)}`,
     },
     {
       icon: '👆',
-      label: 'Сенсорний ввід',
-      value: navigator.maxTouchPoints > 0 ? 'Так' : 'Ні',
+      label: 'Touch input',
+      value: navigator.maxTouchPoints > 0 ? 'Yes' : 'No',
       hint:
         navigator.maxTouchPoints > 0
-          ? `Точок дотику: ${navigator.maxTouchPoints}`
-          : 'Дотик не підтримується',
+          ? `Touch points: ${navigator.maxTouchPoints}`
+          : 'Touch is not supported',
     },
     {
       icon: '🌓',
-      label: 'Тема системи',
-      value: mq('(prefers-color-scheme: dark)') ? 'Темна' : 'Світла',
+      label: 'System theme',
+      value: mq('(prefers-color-scheme: dark)') ? 'Dark' : 'Light',
       hint: mq('(prefers-reduced-motion: reduce)')
-        ? 'Зменшений рух увімкнено'
-        : 'Анімації дозволені',
+        ? 'Reduced motion is on'
+        : 'Animations allowed',
     },
     {
       icon: '💻',
-      label: 'Платформа',
-      value: navigator.platform || 'невідомо',
-      hint: `Ядер CPU: ${navigator.hardwareConcurrency || '?'}${nav.deviceMemory ? ' · ОЗП: ~' + nav.deviceMemory + ' ГБ' : ''}`,
+      label: 'Platform',
+      value: navigator.platform || 'unknown',
+      hint:
+        `CPU cores: ${cores}` +
+        (nav.deviceMemory ? ` · RAM: ~${nav.deviceMemory} GB` : ''),
     },
   ]
 }
@@ -238,7 +244,7 @@ function update(): void {
 function showRefreshRate(): void {
   measureRefreshRate(hz => {
     const el = document.getElementById('refresh')
-    if (el) el.textContent = `${hz} Гц`
+    if (el) el.textContent = `${hz} Hz`
   })
 }
 
@@ -248,10 +254,10 @@ showRefreshRate()
 // Live update on window resize / zoom / orientation change. Only changed card
 // values are patched and flashed; the grid is never rebuilt, so cards no longer
 // disappear and re-animate when mobile browser chrome shows/hides on scroll.
-let t: ReturnType<typeof setTimeout>
+let resizeTimer: ReturnType<typeof setTimeout>
 function refresh(): void {
-  clearTimeout(t)
-  t = setTimeout(update, 120)
+  clearTimeout(resizeTimer)
+  resizeTimer = setTimeout(update, 120)
 }
 window.addEventListener('resize', refresh)
 window.addEventListener('orientationchange', refresh)
@@ -263,6 +269,6 @@ if (uaEl) {
   const browser =
     navigator.userAgent.match(
       /(Firefox|Edg|OPR|Chrome|Safari)\/[\d.]+/g,
-    )?.[0] || 'Браузер'
-  uaEl.textContent = `${browser} · оновлено ${new Date().toLocaleTimeString('uk')}`
+    )?.[0] || 'Browser'
+  uaEl.textContent = `${browser} · updated ${new Date().toLocaleTimeString()}`
 }

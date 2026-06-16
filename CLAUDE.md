@@ -77,7 +77,10 @@ These are binding conventions for this repo (canonical source — do not rely on
 
 - **Language:** all logic is TypeScript in [src/script.ts](src/script.ts); never hand-edit the
   generated `dist/script.js`. Run `npm run build` after changing the source.
-- **UI text is in Ukrainian** — user-facing strings (card labels, hints, headings) stay Ukrainian.
+- **UI text is in English** — user-facing strings (card labels, hints, headings) are written
+  directly in source. There is no i18n layer (a previous Ukrainian/multi-locale catalog was
+  removed in favor of an English-only page; a future Next.js rewrite is the planned path for
+  proper per-locale routing and metadata).
 - **Code comments, documentation, and commit messages are in English, with no emoji.**
   (Emoji are allowed only as UI card icons in [src/script.ts](src/script.ts), where they are
   product content, not documentation.)

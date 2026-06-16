@@ -4,7 +4,7 @@ A single-page site that reads and displays your monitor/display information dire
 browser: resolution, system scale (DPR), page zoom, viewport, available area, refresh rate,
 color depth, color gamut, orientation, touch support, system theme, and platform details.
 
-The UI is in Ukrainian. All values update live when you resize or zoom the window.
+The UI is in English. All values update live when you resize or zoom the window.
 
 ## Tech stack
 
