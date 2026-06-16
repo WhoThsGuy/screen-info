@@ -18,13 +18,6 @@ interface NavigatorExtended extends Navigator {
 
 const mq = (q: string): boolean => window.matchMedia(q).matches
 
-// Estimates the page zoom level in the browser
-function pageZoom(): number {
-  // outerWidth / innerWidth gives an approximate window zoom level
-  const z = Math.round((window.outerWidth / window.innerWidth) * 100)
-  return isFinite(z) && z > 0 ? z : 100
-}
-
 // Display color gamut
 function colorGamut(): string {
   if (mq('(color-gamut: rec2020)')) return 'Rec. 2020'
@@ -95,12 +88,6 @@ function buildCards(): CardDescriptor[] {
           : 'Стандартна щільність пікселів',
     },
     {
-      icon: '🔎',
-      label: 'Масштаб сторінки',
-      value: `${pageZoom()}%`,
-      hint: 'Рівень зуму у вікні браузера',
-    },
-    {
       icon: '📐',
       label: 'Область перегляду',
       value: `${window.innerWidth} × ${window.innerHeight}`,
@@ -166,41 +153,105 @@ function buildCards(): CardDescriptor[] {
 // ---- Render ----
 
 const grid = document.getElementById('grid') as HTMLElement
-const prevValues: Record<string, string> = {}
 
-function render(): void {
-  const cards = buildCards()
-  grid.innerHTML = ''
-  cards.forEach((c, i) => {
+// Per-card DOM references and last-seen text, keyed by label, so live updates
+// can patch text in place instead of rebuilding the whole grid.
+const cardEls: Record<string, HTMLElement> = {}
+const valueEls: Record<string, HTMLElement> = {}
+const hintEls: Record<string, HTMLElement> = {}
+const prevValues: Record<string, string> = {}
+const prevHints: Record<string, string> = {}
+
+// Restart the flash animation on a card element.
+function flash(el: HTMLElement): void {
+  el.classList.remove('flash')
+  // The entrance stagger set an inline animation-delay; clear it so the flash
+  // plays immediately instead of inheriting that delay.
+  el.style.animationDelay = '0s'
+  void el.offsetWidth // force reflow so the animation can replay
+  el.classList.add('flash')
+}
+
+// Build the grid once. The set of cards is static; only their values change
+// afterwards, so we keep the nodes and never recreate them.
+function buildGrid(): void {
+  const frag = document.createDocumentFragment()
+  buildCards().forEach((c, i) => {
     const el = document.createElement('div')
     el.className = 'card' + (c.featured ? ' featured' : '')
     el.style.animationDelay = i * 45 + 'ms'
 
-    const changed =
-      prevValues[c.label] !== undefined && prevValues[c.label] !== c.value
-    el.innerHTML = `
-      <div class="icon">${c.icon}</div>
-      <div class="label">${c.label}</div>
-      <div class="value${changed ? ' changed' : ''}"${c.id ? ` id="${c.id}"` : ''}>${c.value}</div>
-      <div class="hint">${c.hint}</div>`
-    grid.appendChild(el)
-    prevValues[c.label] = c.value
-  })
+    const icon = document.createElement('div')
+    icon.className = 'icon'
+    icon.textContent = c.icon
 
-  // Refresh rate is measured asynchronously
-  measureRefreshRate(hz => {
-    const r = document.getElementById('refresh')
-    if (r) r.textContent = `${hz} Гц`
+    const label = document.createElement('div')
+    label.className = 'label'
+    label.textContent = c.label
+
+    const value = document.createElement('div')
+    value.className = 'value'
+    if (c.id) value.id = c.id
+    value.textContent = c.value
+
+    const hint = document.createElement('div')
+    hint.className = 'hint'
+    hint.textContent = c.hint
+
+    el.append(icon, label, value, hint)
+    frag.appendChild(el)
+
+    cardEls[c.label] = el
+    valueEls[c.label] = value
+    hintEls[c.label] = hint
+    prevValues[c.label] = c.value
+    prevHints[c.label] = c.hint
+  })
+  grid.appendChild(frag)
+}
+
+// Patch only the cards whose value or hint changed, and flash just those.
+// The refresh-rate card is skipped: its value is filled in asynchronously by
+// measureRefreshRate, while buildCards only carries a placeholder for it.
+function update(): void {
+  buildCards().forEach(c => {
+    if (c.id === 'refresh') return
+
+    let changed = false
+    if (prevValues[c.label] !== c.value) {
+      valueEls[c.label].textContent = c.value
+      prevValues[c.label] = c.value
+      changed = true
+    }
+    if (prevHints[c.label] !== c.hint) {
+      hintEls[c.label].textContent = c.hint
+      prevHints[c.label] = c.hint
+      changed = true
+    }
+    if (changed) flash(cardEls[c.label])
   })
 }
 
-render()
+// Measure the refresh rate once on load. It is intentionally not re-measured on
+// resize: re-running the ~1s rAF probe on every mobile scroll would waste CPU,
+// and the rate does not change while the page is open.
+function showRefreshRate(): void {
+  measureRefreshRate(hz => {
+    const el = document.getElementById('refresh')
+    if (el) el.textContent = `${hz} Гц`
+  })
+}
 
-// Live update on window resize / zoom / orientation change
+buildGrid()
+showRefreshRate()
+
+// Live update on window resize / zoom / orientation change. Only changed card
+// values are patched and flashed; the grid is never rebuilt, so cards no longer
+// disappear and re-animate when mobile browser chrome shows/hides on scroll.
 let t: ReturnType<typeof setTimeout>
 function refresh(): void {
   clearTimeout(t)
-  t = setTimeout(render, 120)
+  t = setTimeout(update, 120)
 }
 window.addEventListener('resize', refresh)
 window.addEventListener('orientationchange', refresh)

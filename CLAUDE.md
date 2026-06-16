@@ -56,13 +56,17 @@ All logic lives in [src/script.ts](src/script.ts) and is data-driven:
 - `buildCards()` returns an **array of card descriptor objects** (`icon`, `label`, `value`,
   `hint`, optional `featured`, optional `id`). This is the single source of truth for what the
   page shows — **add or change a metric by editing this array**, not the DOM.
-- `render()` rebuilds the entire grid from `buildCards()`. It diffs each value against
-  `prevValues` and adds a `.changed` class to flash cards whose value updated.
+- `buildGrid()` creates the card DOM **once** and caches each card's element refs
+  (`cardEls` / `valueEls` / `hintEls`) keyed by label. The grid is never rebuilt afterwards.
+- `update()` calls `buildCards()` again and patches in place **only** the cards whose value or
+  hint changed, then calls `flash()` on those cards (a one-shot `.flash` highlight). It skips the
+  `id="refresh"` card. This in-place model is deliberate: rebuilding the grid made cards vanish
+  and re-animate every time mobile browser chrome showed/hid on scroll (a `resize` storm).
 - Live updates: `resize`, `orientationchange`, and `screen.orientation` change events call a
-  debounced `refresh()` → `render()`. This is why moving/zooming the window updates the cards.
-- Refresh rate is measured asynchronously via `measureRefreshRate()` (counts
-  `requestAnimationFrame` callbacks over ~1s) and patched into the card with `id="refresh"`
-  after render, since it can't be read synchronously.
+  debounced `refresh()` → `update()`.
+- Refresh rate is measured **once on load** via `measureRefreshRate()` (counts
+  `requestAnimationFrame` callbacks over ~1s) and written into the `id="refresh"` card. It is not
+  re-measured on resize, to avoid re-running the 1s probe on every mobile scroll.
 
 Display facts come from `screen.*`, `window.devicePixelRatio`, `window.matchMedia(...)`
 (color-gamut / dynamic-range / `prefers-*` queries), and `navigator.*`.
@@ -81,4 +85,6 @@ These are binding conventions for this repo (canonical source — do not rely on
   (see [style.css](style.css)) for theme/accent colors instead of hardcoding.
 - **Loading:** the script is loaded from `<head>` with `defer` (modern pattern), not at the end
   of `<body>`.
-- **Git:** do not sign commits (no `-S` / GPG signing, no signed tags).
+- **Git:** do not sign commits (no `-S` / GPG signing, no signed tags). Do not add authorship
+  or tool-attribution trailers to commit messages or PRs — e.g. no `Co-Authored-By: Claude ...`
+  and no "Generated with Claude Code" lines. Commit messages contain only the change description.
