@@ -1,7 +1,22 @@
 {
-  "name": "screen-scope",
+  "name": "screen-info",
   "version": "1.0.0",
   "description": "Single-page site that displays monitor/display information in the browser.",
+  "keywords": [
+    "screen",
+    "display",
+    "resolution",
+    "device-pixel-ratio",
+    "monitor"
+  ],
+  "license": "MIT",
+  "author": "WhoThsGuy (https://github.com/WhoThsGuy)",
+  "homepage": "https://whothsguy.github.io/screen-info/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/WhoThsGuy/screen-info.git"
+  },
+  "bugs": "https://github.com/WhoThsGuy/screen-info/issues",
   "private": true,
   "type": "module",
   "scripts": {

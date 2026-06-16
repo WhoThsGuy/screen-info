@@ -1,4 +1,4 @@
-# screen-scope
+# screen-info
 
 A single-page site that reads and displays your monitor/display information directly in the
 browser: resolution, system scale (DPR), page zoom, viewport, available area, refresh rate,
@@ -43,3 +43,14 @@ The page is data-driven: `buildCards()` in [src/script.ts](src/script.ts) return
 card descriptors that is the single source of truth for what the page shows. `render()` rebuilds
 the grid from that array and flashes any card whose value changed. The refresh rate is measured
 asynchronously by counting `requestAnimationFrame` callbacks over roughly one second.
+
+## Deployment
+
+Pushing to `main` triggers the [GitHub Pages workflow](.github/workflows/deploy.yml), which runs
+`npm ci && npm run build`, assembles `index.html`, `style.css`, and `dist/` into a clean bundle,
+and publishes it. Enable it once under **Settings -> Pages -> Build and deployment -> Source:
+GitHub Actions**.
+
+## License
+
+[MIT](LICENSE) © [WhoThsGuy](https://github.com/WhoThsGuy)
