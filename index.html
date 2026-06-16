@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="uk">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Дані монітора</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css" />
+    <script src="dist/script.js" defer></script>
+  </head>
+  <body>
+    <div class="bg-glow"></div>
+
+    <main class="wrap">
+      <header class="hero">
+        <span class="badge" id="liveBadge"
+          ><span class="dot"></span> Оновлюється наживо</span
+        >
+        <h1>Дані вашого <span class="grad">монітора</span></h1>
+        <p class="sub">
+          Уся доступна інформація про екран, зчитана прямо у браузері.
+        </p>
+      </header>
+
+      <section class="grid" id="grid"></section>
+
+      <footer class="foot">
+        <span id="ua">—</span>
+      </footer>
+    </main>
+  </body>
+</html>

@@ -1,0 +1,7 @@
+node_modules
+dist
+package-lock.json
+
+# Hand-maintained docs: keep Prettier from reflowing tables and mangling
+# wildcard tokens like prefers-* in prose.
+CLAUDE.md
