@@ -45,18 +45,49 @@ function aspectRatio(w: number, h: number): string {
   return `${w / d}:${h / d}`
 }
 
-// Measures the screen refresh rate via requestAnimationFrame
-function measureRefreshRate(cb: (hz: number) => void): void {
-  let frames = 0
-  const start = performance.now()
+function median(xs: number[]): number {
+  const s = [...xs].sort((a, b) => a - b)
+  const m = Math.floor(s.length / 2)
+  return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2
+}
+
+// Tracks the display refresh rate live. There is no browser API that exposes it
+// (it would be a fingerprinting vector), so we sample requestAnimationFrame
+// frame intervals. The first second after load is janky (entrance animations,
+// font/layout work), which is why a one-shot average came out wrong; instead we
+// report the median of a rolling window of frame deltas and keep updating until
+// the estimate holds steady, then stop so the page can idle.
+function trackRefreshRate(onHz: (hz: number) => void): void {
+  const deltas: number[] = []
+  let last = performance.now()
+  let shown = 0
+  let stableMs = 0
+
   function tick(now: number): void {
-    frames++
-    if (now - start >= 1000) {
-      cb(Math.round((frames * 1000) / (now - start)))
-    } else {
-      requestAnimationFrame(tick)
+    const dt = now - last
+    last = now
+
+    // Ignore frame gaps from background tabs or GC pauses.
+    if (dt > 1 && dt < 100) {
+      deltas.push(dt)
+      if (deltas.length > 150) deltas.shift()
     }
+
+    if (deltas.length >= 10) {
+      const hz = Math.round(1000 / median(deltas))
+      if (hz !== shown) {
+        shown = hz
+        stableMs = 0
+        onHz(hz)
+      } else {
+        stableMs += dt
+      }
+    }
+
+    // Keep sampling until the value has held steady for ~2s, then stop.
+    if (stableMs < 2000) requestAnimationFrame(tick)
   }
+
   requestAnimationFrame(tick)
 }
 
@@ -238,13 +269,14 @@ function update(): void {
   })
 }
 
-// Measure the refresh rate once on load. It is intentionally not re-measured on
-// resize: re-running the ~1s rAF probe on every mobile scroll would waste CPU,
-// and the rate does not change while the page is open.
+// Fill in the refresh-rate card live as the estimate converges. It is not tied
+// to resize: the rate does not change while the page is open, and the tracker
+// stops on its own once the value is stable.
 function showRefreshRate(): void {
-  measureRefreshRate(hz => {
-    const el = document.getElementById('refresh')
-    if (el) el.textContent = `${hz} Hz`
+  const el = document.getElementById('refresh')
+  if (!el) return
+  trackRefreshRate(hz => {
+    el.textContent = `${hz} Hz`
   })
 }
 

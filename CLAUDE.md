@@ -64,9 +64,10 @@ All logic lives in [src/script.ts](src/script.ts) and is data-driven:
   and re-animate every time mobile browser chrome showed/hid on scroll (a `resize` storm).
 - Live updates: `resize`, `orientationchange`, and `screen.orientation` change events call a
   debounced `refresh()` → `update()`.
-- Refresh rate is measured **once on load** via `measureRefreshRate()` (counts
-  `requestAnimationFrame` callbacks over ~1s) and written into the `id="refresh"` card. It is not
-  re-measured on resize, to avoid re-running the 1s probe on every mobile scroll.
+- Refresh rate is tracked **live** via `trackRefreshRate()`, which samples `requestAnimationFrame`
+  frame intervals and reports the **median** of a rolling window into the `id="refresh"` card. It
+  updates as the estimate converges (the first ~1s after load is too janky for a one-shot average)
+  and stops once the value holds steady, so the page can idle. It is not tied to resize.
 
 Display facts come from `screen.*`, `window.devicePixelRatio`, `window.matchMedia(...)`
 (color-gamut / dynamic-range / `prefers-*` queries), and `navigator.*`.
