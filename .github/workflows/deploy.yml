@@ -42,6 +42,8 @@ jobs:
           cp -r dist _site/dist
           # Social preview image (optional): copy if present.
           cp og-image.jpg _site/ 2>/dev/null || echo "og-image.jpg not found, skipping social preview image"
+          # Custom domain for GitHub Pages (Actions deploys need this in the artifact).
+          cp CNAME _site/
 
       - uses: actions/upload-pages-artifact@v3
         with:
