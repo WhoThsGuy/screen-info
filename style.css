@@ -174,9 +174,22 @@ h1 {
 }
 
 .card .icon {
-  font-size: 22px;
+  display: flex;
   margin-bottom: 14px;
-  opacity: 0.9;
+  color: var(--accent2);
+}
+
+.card .icon svg {
+  width: 24px;
+  height: 24px;
+}
+
+/* Accent gradient shared by all icon strokes (matches the title highlight). */
+#icon-gradient stop:first-child {
+  stop-color: var(--accent);
+}
+#icon-gradient stop:last-child {
+  stop-color: var(--accent2);
 }
 
 .card .label {

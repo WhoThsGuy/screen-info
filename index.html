@@ -44,6 +44,16 @@
     <script src="dist/script.js" defer></script>
   </head>
   <body>
+    <!-- Shared gradient for the inline SVG icons, tied to the accent vars. -->
+    <svg width="0" height="0" aria-hidden="true" focusable="false">
+      <defs>
+        <linearGradient id="icon-gradient" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" />
+          <stop offset="100%" />
+        </linearGradient>
+      </defs>
+    </svg>
+
     <div class="bg-glow"></div>
 
     <main class="wrap">

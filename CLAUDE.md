@@ -82,9 +82,10 @@ These are binding conventions for this repo (canonical source — do not rely on
   directly in source. There is no i18n layer (a previous Ukrainian/multi-locale catalog was
   removed in favor of an English-only page; a future Next.js rewrite is the planned path for
   proper per-locale routing and metadata).
-- **Code comments, documentation, and commit messages are in English, with no emoji.**
-  (Emoji are allowed only as UI card icons in [src/script.ts](src/script.ts), where they are
-  product content, not documentation.)
+- **Code comments, documentation, and commit messages are in English, with no emoji.** The page
+  itself uses no emoji either — card icons are inline Lucide SVG (the `icons` table in
+  [src/script.ts](src/script.ts)) so they render identically across devices instead of relying on
+  per-OS emoji fonts. Each icon is trusted SVG markup injected via `innerHTML`.
 - **Styling via CSS variables:** reuse the custom properties in `:root`
   (see [style.css](style.css)) for theme/accent colors instead of hardcoding.
 - **Loading:** the script is loaded from `<head>` with `defer` (modern pattern), not at the end
