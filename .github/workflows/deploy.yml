@@ -39,6 +39,8 @@ jobs:
         run: |
           mkdir _site
           cp index.html style.css _site/
+          cp favicon.ico favicon.svg favicon-96x96.png apple-touch-icon.png _site/
+          cp site.webmanifest web-app-manifest-192x192.png web-app-manifest-512x512.png _site/
           cp -r dist _site/dist
           # Social preview image (optional): copy if present.
           cp og-image.jpg _site/ 2>/dev/null || echo "og-image.jpg not found, skipping social preview image"
